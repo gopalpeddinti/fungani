@@ -166,6 +166,7 @@ Example of use:
     python -m venv .venv
     source .venv/bin/activate
     pip install -r requirements.txt
+    pip install .
 
 Your application should be ready. You can deactivate the environment using the
 corresponding command, anytime at your terminal prompt, when you are done. The
