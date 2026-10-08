@@ -1,7 +1,8 @@
 import argparse
 import sys
 
-from fungani.core import main
+from fungani import __version__
+from fungani.core import main as run_analysis
 
 ARG_MAX_WIDTH = 60
 
@@ -13,6 +14,13 @@ def parse_args(args):
         formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(
             prog, max_help_position=ARG_MAX_WIDTH
         ),
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="show program's version number and exit",
     )
     parser.add_argument("reference", type=str, help="Reference genome")
     parser.add_argument("test", type=str, help="Test genome")
@@ -42,7 +50,12 @@ def parse_args(args):
         "-j", "--cpus", dest="cpus", type=int, default=4, help="Number of CPU cores"
     )
     parser.add_argument(
-        "-o", "--output", dest="outdir", type=str, help="Output directory"
+        "-o",
+        "--output",
+        dest="outdir",
+        type=str,
+        default=None,
+        help="Output directory",
     )
     parser.add_argument(
         "-u",
@@ -57,14 +70,18 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-if __name__ == "__main__":
-    args = parse_args(sys.argv[1:])
+def main(argv=None):
+    args = parse_args(sys.argv[1:] if argv is None else argv)
     if args.onepass:
         args.mode = "fwd"
-        main(args)
-    else:
-        args.mode = "fwd"
-        main(args)
-        args.mode = "rev"
-        args.test, args.reference = args.reference, args.test
-        main(args)
+        return run_analysis(args)
+
+    args.mode = "fwd"
+    run_analysis(args)
+    args.mode = "rev"
+    args.test, args.reference = args.reference, args.test
+    return run_analysis(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

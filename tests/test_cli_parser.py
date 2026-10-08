@@ -1,4 +1,10 @@
+from fungani import cli
 from fungani.cli import parse_args
+
+
+def test_cli_has_main_entrypoint():
+    assert hasattr(cli, "main")
+    assert callable(cli.main)
 
 
 def test_parser_default_outdir():

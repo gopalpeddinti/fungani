@@ -7,12 +7,13 @@ packages <- lapply(packages, FUN = function(x) {
 })
 
 args <- commandArgs(trailingOnly = TRUE)
-homedir <- path.expand("~")
-outfile <- file.path(homedir, "fungani.pdf")
+#homedir <- path.expand("~")
+#outfile <- file.path(homedir, "fungani.pdf")
+outfile <- args[5]
 genosize <- as.numeric(args[1])
 threshold <- as.numeric(args[2])
 file_fwd <- args[3]
-if (length(args) > 3) {
+if (length(args) > 4) {
   file_rev <- args[4]
 }
 strain_ref <- "A"
@@ -80,7 +81,7 @@ p1_base <- ggplot(dx, aes(x = NI, y = Freq, fill = NI)) +
 
 p1 <- p1_base + scale_y_reverse()
 
-if (length(args) > 3) {
+if (length(args) > 4) {
   d2 <- read.csv(file_rev, header = FALSE)
   nsample <- nrow(d2)
   dd <- subset(d2, d2$V2 >= threshold / 100)
@@ -166,7 +167,7 @@ p3 <- ggplot(data = dd0_agg, aes(x = groups, y = V3)) +
     plot.margin = unit(c(0, 0, 0, 0), "mm")
   )
 
-if (length(args) > 3) {
+if (length(args) > 4) {
   d2$V3 <- as.numeric(d2$V2 == 0)
   n <- 100
   nr <- nrow(d2)
@@ -194,7 +195,7 @@ if (length(args) > 3) {
     )
 }
 
-if (length(args) > 3) {
+if (length(args) > 4) {
   if (genosize == 100) {
     pp <- (p1 + p2) / plot_spacer() / p3 / p4 +
       plot_layout(heights = c(8, 0.5, 0.8, 0.8)) +

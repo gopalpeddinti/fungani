@@ -3,6 +3,7 @@ import logging
 import mmap
 import multiprocessing
 import os
+from pathlib import Path
 import platform
 import random
 import re
@@ -21,11 +22,11 @@ HAVE_R = shutil.which("R")
 
 def universal_open(filepath):
     if platform.system() == "Darwin":
-        subprocess.call(("open", filepath))
+        subprocess.call(["open", filepath])
     elif platform.system() == "Windows":
         os.startfile(filepath)
     else:
-        subprocess.call(("xdg-open", filepath))
+        subprocess.call(["xdg-open", filepath])
 
 
 def run_async(func, arglist, kwds, cpus):
@@ -87,7 +88,7 @@ def blast(record, blast_dir, query_dir, db):
         with open(query, "w") as file:
             fasta.write_fasta_record(file, r[0], r[1])
 
-        cmd = (
+        cmd = [
             str(BLASTN),
             "-out",
             os.path.join(blast_dir, key),
@@ -99,7 +100,7 @@ def blast(record, blast_dir, query_dir, db):
             query,
             "-max_target_seqs",
             "1",
-        )
+        ]
         subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -131,7 +132,7 @@ def make_blast_db(pathname, filename):
     outfile = os.path.join(
         pathname, os.path.splitext(os.path.basename(filename))[0] + "-db"
     )
-    cmd = (str(MAKEBLASTDB), "-dbtype", "nucl", "-in", filename, "-out", outfile)
+    cmd = [str(MAKEBLASTDB), "-dbtype", "nucl", "-in", filename, "-out", outfile]
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     return outfile
@@ -139,7 +140,8 @@ def make_blast_db(pathname, filename):
 
 def main(args):
     logging.basicConfig(
-        filename=os.path.join(os.path.expanduser("~"), "fungani.log"),
+        # filename=os.path.join(os.path.expanduser("~"), "fungani.log")
+        filename=Path(args.outdir, "fungani.log"),
         format="%(asctime)s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         level=logging.INFO,
@@ -160,7 +162,8 @@ def main(args):
         if args.mode == "fwd":
             if os.path.isdir(args.outdir):
                 if os.listdir(args.outdir):
-                    sys.exit(f"Directory {args.outdir} is not empty")
+                    #sys.exit(f"Directory {args.outdir} is not empty")
+                    logger.warning(f"Directory {args.outdir} is not empty")
         fs_tmp = args.outdir
     if not args.clean:
         fs_ani_queries = os.path.join(fs_tmp, args.mode, "ani_q")
@@ -214,7 +217,8 @@ def main(args):
     logger.info("Parsing Blast")
     out, index = parse_results(fs_ani_blasts)
     logger.info(f">>> {len(out)} Blast results analysed")
-    outfile = os.path.join(os.path.expanduser("~"), f"fungani_{args.mode}.csv")
+    #outfile = os.path.join(os.path.expanduser("~"), f"fungani_{args.mode}.csv")
+    outfile = Path(args.outdir, f"fungani_{args.mode}.csv")
     rows = zip(index, out)
     with open(outfile, "w") as f:
         writer = csv.writer(f)
@@ -232,29 +236,38 @@ def main(args):
 
     if args.mode == "rev" or args.onepass:
         if HAVE_R:
-            file_fwd = os.path.join(os.path.expanduser("~"), "fungani_fwd.csv")
-            file_plot = os.path.join(os.path.expanduser("~"), "fungani.pdf")
-            file_rscript = os.path.join(
-                os.path.abspath(os.path.dirname(__file__)), "plot.r"
-            )
+            #file_fwd = os.path.join(os.path.expanduser("~"), "fungani_fwd.csv")
+            file_fwd = str(Path(args.outdir, "fungani_fwd.csv"))
+            #file_plot = os.path.join(os.path.expanduser("~"), "fungani.pdf")
+            file_plot = str(Path(args.outdir, "fungani.pdf"))
+            #file_rscript = os.path.join(
+            #    os.path.abspath(os.path.dirname(__file__)), "plot.r"
+            #)
+            file_rscript = str(Path(
+                Path(__file__).resolve().parent,
+                "plot.r",
+            ))
             if args.mode == "rev":
-                file_rev = os.path.join(os.path.expanduser("~"), "fungani_rev.csv")
-                cmd = (
+                #file_rev = os.path.join(os.path.expanduser("~"), "fungani_rev.csv")
+                file_rev = str(Path(args.outdir, "fungani_rev.csv"))
+                cmd = [
                     "Rscript",
                     file_rscript,
                     str(args.percent),
                     str(args.threshold),
                     file_fwd,
                     file_rev,
-                )
+                    file_plot,
+                ]
             if args.onepass:
-                cmd = (
+                cmd = [
                     "Rscript",
                     file_rscript,
                     str(args.percent),
                     str(args.threshold),
                     file_fwd,
-                )
+                    file_plot,
+                ]
 
             out = subprocess.run(
                 cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
