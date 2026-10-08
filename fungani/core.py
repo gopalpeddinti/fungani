@@ -139,13 +139,16 @@ def make_blast_db(pathname, filename):
 
 
 def main(args):
+    output_dir = Path(args.outdir) if args.outdir else Path.home()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     logging.basicConfig(
-        # filename=os.path.join(os.path.expanduser("~"), "fungani.log")
-        filename=Path(args.outdir, "fungani.log"),
+        filename=str(output_dir / "fungani.log"),
         format="%(asctime)s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
         level=logging.INFO,
         filemode="w+" if args.mode == "fwd" else "w",
+        force=True,
     )
 
     if args.mode == "fwd":
@@ -155,41 +158,35 @@ def main(args):
     logger.info("Creating temporary directories")
     # XXX switch to os.path.join(os.sep, ...) for Windows and maybe check rootdir
     # https://stackoverflow.com/a/51276165
-    if args.outdir is None:
-        temp_dir = tempfile.TemporaryDirectory()
-        fs_tmp = temp_dir.name
-    else:
-        if args.mode == "fwd":
-            if os.path.isdir(args.outdir):
-                if os.listdir(args.outdir):
-                    #sys.exit(f"Directory {args.outdir} is not empty")
-                    logger.warning(f"Directory {args.outdir} is not empty")
-        fs_tmp = args.outdir
+    if args.mode == "fwd" and output_dir.is_dir() and any(output_dir.iterdir()):
+        logger.warning(f"Directory {output_dir} is not empty")
     if not args.clean:
-        fs_ani_queries = os.path.join(fs_tmp, args.mode, "ani_q")
-        os.makedirs(fs_ani_queries)
-        fs_ani_blasts = os.path.join(fs_tmp, args.mode, "ani_b")
-        os.makedirs(fs_ani_blasts)
+        fs_tmp = output_dir / args.mode
+        fs_ani_queries = fs_tmp / "ani_q"
+        fs_ani_blasts = fs_tmp / "ani_b"
+        fs_ani_queries.mkdir(parents=True, exist_ok=True)
+        fs_ani_blasts.mkdir(parents=True, exist_ok=True)
     else:
-        fs_ani_queries = os.path.join(fs_tmp, "ani_q")
-        os.makedirs(fs_ani_queries)
-        fs_ani_blasts = os.path.join(fs_tmp, "ani_b")
-        os.makedirs(fs_ani_blasts)
+        fs_tmp = output_dir
+        fs_ani_queries = fs_tmp / "ani_q"
+        fs_ani_blasts = fs_tmp / "ani_b"
+        fs_ani_queries.mkdir(parents=True, exist_ok=True)
+        fs_ani_blasts.mkdir(parents=True, exist_ok=True)
 
     if args.size <= 15:
         sys.exit(f"Window size {args.size} too small")
 
     if args.cpus > multiprocessing.cpu_count() - 1:
         args.cpus = multiprocessing.cpu_count() - 1
-        logger.warn(f"No. cores too large, now {args.cpus}")
+        logger.warning(f"No. cores too large, now {args.cpus}")
 
     if 0 < args.threshold < 1:
         args.threshold *= 100
-        logger.warn(f"ANI threshold < 1, now {args.threshold}")
+        logger.warning(f"ANI threshold < 1, now {args.threshold}")
 
     if 0 < args.percent < 1:
         args.percent *= 100
-        logger.warn(f"Genome sampling < 1, now {args.percent}")
+        logger.warning(f"Genome sampling < 1, now {args.percent}")
 
     logger.info("Writing Blast database")
     reference_db = make_blast_db(fs_tmp, args.reference)
@@ -218,7 +215,7 @@ def main(args):
     out, index = parse_results(fs_ani_blasts)
     logger.info(f">>> {len(out)} Blast results analysed")
     #outfile = os.path.join(os.path.expanduser("~"), f"fungani_{args.mode}.csv")
-    outfile = Path(args.outdir, f"fungani_{args.mode}.csv")
+    outfile = output_dir / f"fungani_{args.mode}.csv"
     rows = zip(index, out)
     with open(outfile, "w") as f:
         writer = csv.writer(f)
@@ -228,8 +225,10 @@ def main(args):
 
     if args.clean:
         logger.info("Deleting temporary directories")
-        shutil.rmtree(fs_tmp)
-        logger.info(f">>> '{fs_tmp}' deleted successfully")
+        for target in (fs_ani_queries, fs_ani_blasts):
+            if target.exists():
+                shutil.rmtree(target)
+        logger.info(f">>> '{fs_ani_queries.parent}' cleaned successfully")
 
     if args.mode == "rev" or args.onepass:
         logger.info("=========== Process completed ============")
@@ -237,9 +236,9 @@ def main(args):
     if args.mode == "rev" or args.onepass:
         if HAVE_R:
             #file_fwd = os.path.join(os.path.expanduser("~"), "fungani_fwd.csv")
-            file_fwd = str(Path(args.outdir, "fungani_fwd.csv"))
+            file_fwd = str(output_dir / "fungani_fwd.csv")
             #file_plot = os.path.join(os.path.expanduser("~"), "fungani.pdf")
-            file_plot = str(Path(args.outdir, "fungani.pdf"))
+            file_plot = str(output_dir / "fungani.pdf")
             #file_rscript = os.path.join(
             #    os.path.abspath(os.path.dirname(__file__)), "plot.r"
             #)
@@ -249,7 +248,7 @@ def main(args):
             ))
             if args.mode == "rev":
                 #file_rev = os.path.join(os.path.expanduser("~"), "fungani_rev.csv")
-                file_rev = str(Path(args.outdir, "fungani_rev.csv"))
+                file_rev = str(output_dir / "fungani_rev.csv")
                 cmd = [
                     "Rscript",
                     file_rscript,
