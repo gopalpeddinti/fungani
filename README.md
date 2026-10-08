@@ -1,7 +1,12 @@
 # FungANI
 
 A BLAST-based program for analyzing Average Nucleotide Identity (ANI) between
-two fungal genomes, enables easy fungal species delimitation.
+two fungal genomes, enabling easy fungal species delimitation.
+
+This repository is a fork of the original project and retains the same core ANI
+implementation while improving portability and usability. The Docker image
+`gpgdx/fungani` is the recommended option for users who want to run FungANI
+without installing BLAST+, R, and Python dependencies locally.
 
 ## Getting Started
 
@@ -34,6 +39,23 @@ or pip install.
 [conda]: https://www.anaconda.com/download/
 [Poetry]: https://python-poetry.org/
 [fqfa]: https://pypi.org/project/fqfa/
+
+### Recommended: containerized installation
+
+A portable container is provided for convenience and is the easiest way to run
+FungANI on Linux, macOS, or Windows with Docker Desktop or Podman.
+
+    docker pull gpgdx/fungani
+    docker run --rm \
+      -v "$PWD":/data \
+      -v "$PWD/out":/out \
+      gpgdx/fungani \
+      -o /out \
+      /data/reference.fasta /data/test.fasta
+
+The container already includes the required BLAST+ and R tooling, along with the
+Python dependencies. The output directory is where FungANI writes its CSV files,
+plot, and log file.
 
 ### Installation on Windows
 
@@ -131,7 +153,7 @@ Python should already be available on your system.
 
 Clone the repository from GitHub:
 
-    git clone https://github.com/podo-gec/fungani.git
+    git clone https://github.com/gopalpeddinti/fungani.git
 
 In this case, you will need to take care of creating and activating a virtual
 environment, installing the relevant packages (see [prerequisites]), and
@@ -139,7 +161,7 @@ launching the application yourself (see below).
 
 Example of use:
 
-    git clone https://github.com/podo-gec/fungani.git
+    git clone https://github.com/gopalpeddinti/fungani.git
     cd fungani
     python -m venv .venv
     source .venv/bin/activate
@@ -152,9 +174,9 @@ next time, you will only need to activate the virtual environment.
 [prerequisites]: #prerequisites
 
 Assuming you are at the root of the project and the virtual environment is
-activated, simply run:
+activated, the installed entry point is:
 
-    python -m fungani.cli -h
+    fungani -h
 
 This should print the help message and show options with default values:
 
@@ -173,32 +195,35 @@ This should print the help message and show options with default values:
       -w SIZE, --size SIZE                 Window size (default: 1000)
       -g OVERLAP, --overlap OVERLAP        Window overlap (default: 500)
       -j CPUS, --cpus CPUS                 Number of CPU cores (default: 4)
-      -o OUTDIR, --output OUTDIR           Output directory (default: None)
+      -o OUTDIR, --output OUTDIR           Output directory
       -u, --onepass                        Only in one direction only (default: False)
       -c, --clean                          Clean intermediate files (default: False)
 
 To run the program on a REFERENCE and TEST genome, use the following command:
 
-    python -m fungani.cli REFERENCE TEST [-t 80] [-p 10] [-w 1000] [-g 500] [-j 20] [-c] [-o tmp]
+    fungani REFERENCE TEST -o output_dir [-t 80] [-p 10] [-w 1000] [-g 500] [-j 20] [-c]
 
 In the above example, `REFERENCE` and `TEST` denote the path to the Fasta file
-for the reference and test genomes. All other parameters are optional and can
-safely be omitted but you can change ANI threshold (`-t` or `--threshold`),
-genome fraction (`-p` or `--percent`), window size (`-w` or `--window`),
-overlap (`-g` or `--overlap`), number of cores (`-j` or `--cpus`), direction
-(`-u` or `--onepass`), cleaning of intermediate results (̀`-c` or `--clean`),
-and output directory (`-o` or `--output`) to store intermediate results. All
-intermediate results are cleaned up when the application has finished its job.
+for the reference and test genomes. The output directory (`-o` or `--output`) is
+required and is used to store all generated results and the log file; it should
+be created or selected in advance so that the analysis can write its outputs
+consistently. All other parameters are optional and can safely be omitted but
+you can change ANI threshold (`-t` or `--threshold`), genome fraction (`-p` or
+`--percent`), window size (`-w` or `--window`), overlap (`-g` or `--overlap`),
+number of cores (`-j` or `--cpus`), direction (`-u` or `--onepass`), and
+cleaning of intermediate results (`-c` or `--clean`).
 
-If everything went fine, three files are written in your user home directory,
-two CSV files that contain the % identity (on a 0-1 scale, i.e. 0.8 means 80%)
-in the forward (`fungani_fwd.csv`) and reverse (`fungani_rev.csv`) direction if
-you didn't activate the `-u` or `--onepass` option. The latter considers the
-`TEST` genome as the `REFERENCE` and all blasts are performed against the
-`TEST` genome itself.
+If everything went fine, all output files are written in the selected output
+directory: two CSV files that contain the % identity (on a 0-1 scale, i.e. 0.8
+means 80%) in the forward (`fungani_fwd.csv`) and reverse (`fungani_rev.csv`)
+direction if you didn't activate the `-u` or `--onepass` option. The latter
+considers the `TEST` genome as the `REFERENCE` and all blasts are performed
+against the `TEST` genome itself. The log file is written to
+`<output_dir>/fungani.log`.
 
 Optionally, if R is installed on your OS, a graphical representation of the ANI
-distribution will be generated along raw results in your home user directory.
+distribution will be generated alongside the raw results in the same output
+directory.
 
 ### Running the graphical application
 
