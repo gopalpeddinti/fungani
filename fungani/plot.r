@@ -204,7 +204,7 @@ if (length(args) > 4) {
           "AVERAGE NUCLEOTIDE IDENTITY = ",
           format(round(mean(ani1, ani2) * 100, 2), nsmall = 2), "%"
         ),
-        subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
+        #subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
         theme = theme(plot.title = element_text(
           size = 16,
           face = "bold", hjust = 0.5
@@ -218,7 +218,7 @@ if (length(args) > 4) {
           "AVERAGE NUCLEOTIDE IDENTITY = ",
           format(round(mean(ani1, ani2) * 100, 2), nsmall = 2), "%"
         ),
-        subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
+        #subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
         theme = theme(plot.title = element_text(
           size = 16,
           face = "bold", hjust = 0.5
@@ -234,7 +234,7 @@ if (length(args) > 4) {
           "AVERAGE NUCLEOTIDE IDENTITY = ",
           format(round(mean(ani1) * 100, 2), nsmall = 2), "%"
         ),
-        subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
+        #subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
         theme = theme(
           plot.title = element_text(
             size = 16,
@@ -251,7 +251,7 @@ if (length(args) > 4) {
           "AVERAGE NUCLEOTIDE IDENTITY = ",
           format(round(mean(ani1) * 100, 2), nsmall = 2), "%"
         ),
-        subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
+        #subtitle = paste("Genome fraction =", genosize, "%,", "ANI threshold =", threshold, "%"),
         theme = theme(
           plot.title = element_text(
             size = 16,
